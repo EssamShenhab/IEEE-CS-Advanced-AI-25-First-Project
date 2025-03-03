@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import logging
 
 
 
@@ -13,40 +14,82 @@ def go_to_next():
 
 
 def input_data():
+    """
+    This function handles the dataset upload process in the Dataset Preprocessor application.
+    It displays a file uploader for users to select a CSV or Excel file, reads the file into a DataFrame,
+    and logs the successful upload.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     st.title('Dataset Preprocessor')
     st.text('Welcome to Dataset Preprocessor: Your Gateway to Efficient Data Understanding and Preprocessing!')
 
     st.header('Upload your Dataset')
     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
-    
+
     if uploaded_file is not None:
+        # Determine the file type
+        file_type = uploaded_file.type
+
+        # Read the file into a DataFrame
+        if file_type == "text/csv":
+            df = pd.read_csv(uploaded_file)
+        elif file_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            df = pd.read_excel(uploaded_file)
+        logging.info("\"%s\" uploaded successfully", uploaded_file)
+        st.session_state.original_df = df.copy()
+        st.session_state.df = df
         st.button('Continue', on_click=go_to_next)
 
 
 def visualization():
     side_bar()
+    st.header("Data Visualization")
+    st.write("Select a column to visualize:")
+    column = st.selectbox("Select a column", st.session_state.df.columns)
+    if st.session_state.df[column].dtype == "numerical":
+        st.write("Bar Chart")
+        plt.figure(figsize=(10, 6))
+        sns.countplot(x=column, data=st.session_state.df)
+        st.pyplot()
+    else:
+        st.write("Histogram")
+        plt.figure(figsize=(10, 6))
+        sns.histplot(st.session_state.df[column], kde=True)
+        st.pyplot()
 
 
 def handle_missing_values():
     side_bar()
+    st.header("Handle Missing Values")  
 
 def remove_redundant_features(): 
     side_bar()   
+    st.header("Remove Redundant Features")
 
 def feature_selection():
     side_bar()
+    st.header("Feature Selection")
 
 def encode_data():
     side_bar()
+    st.header("Encode Data")
 
 def feature_scaling():
     side_bar()
+    st.header("Feature Scaling")
 
 def automatic_processing():
     side_bar()
+    st.header("Automatic Processing")
 
 def download_preprocessed_data():
     side_bar()
+    st.header("Download Preprocessed Data")
 
 
 # "Documentation
