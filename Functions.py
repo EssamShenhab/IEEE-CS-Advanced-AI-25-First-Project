@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 import logging
+
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler
 
@@ -307,6 +309,42 @@ def documentation():
     st.write("This section allows you to choose to work with another dataset. All the work done on the current dataset will be lost. This is useful when you want to preprocess multiple datasets in one session. Be sure to download the preprocessed dataset before switching to another dataset.")
     st.subheader("Logging")
     st.write("All the operations performed on the dataset are logged. The log file can be downloaded along with the preprocessed dataset. The log file contains information such as the name of the operation, the time it was performed, and any additional details.")
+    
+    if uploaded_file is not None:
+        st.button('Continue', on_click=go_to_next)
+
+
+def visualization():
+    pass   
+
+def handle_missing_values():
+    pass
+
+def remove_redundant_features():    
+    pass
+
+def feature_selection():
+    pass
+
+def encode_data():
+    pass
+
+def feature_scaling():
+    pass
+
+def automatic_processing():
+    pass
+
+def download_preprocessed_data():
+    pass  
+
+def documentation():
+    side_bar()
+    st.title('Documentation')
+    st.write('This is the documentation page')
+    st.write('This is the documentation page')
+    
+
 
 
 
@@ -344,3 +382,5 @@ def side_bar():
             st.session_state.page = "Download Preprocessed Data"
         if st.button('Documentation'):
             st.session_state.page = "Documentation"
+            st.session_state.page = "Documentation"
+
