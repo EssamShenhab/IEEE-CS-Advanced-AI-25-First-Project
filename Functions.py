@@ -10,6 +10,15 @@ import logging
 
 
 def go_to_next():
+    """
+    Sets the current page in the session state to "next".
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     st.session_state.page = "next"
 
 
@@ -45,22 +54,32 @@ def input_data():
         st.session_state.df = df
         st.button('Continue', on_click=go_to_next)
 
-
 def visualization():
     side_bar()
     st.header("Data Visualization")
     st.write("Select a column to visualize:")
-    column = st.selectbox("Select a column", st.session_state.df.columns)
-    if st.session_state.df[column].dtype == "numerical":
-        st.write("Bar Chart")
-        plt.figure(figsize=(10, 6))
-        sns.countplot(x=column, data=st.session_state.df)
-        st.pyplot()
+    
+    # User selects a column
+    column = st.selectbox("Select X-axis", st.session_state.df.columns)
+
+    # Check if the column is numerical or categorical
+    if pd.api.types.is_numeric_dtype(st.session_state.df[column]):
+        st.write("### Histogram")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.histplot(st.session_state.df[column], kde=True, ax=ax)
+        st.pyplot(fig)
+
     else:
-        st.write("Histogram")
-        plt.figure(figsize=(10, 6))
-        sns.histplot(st.session_state.df[column], kde=True)
-        st.pyplot()
+        st.write("### Bar Chart")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.countplot(x=column, data=st.session_state.df, ax=ax)
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+
+        st.write("### Pie Chart")
+        fig, ax = plt.subplots(figsize=(6, 6))
+        st.session_state.df[column].value_counts().plot.pie(autopct="%1.1f%%", ax=ax)
+        st.pyplot(fig)
 
 
 def handle_missing_values():
@@ -92,12 +111,12 @@ def download_preprocessed_data():
     st.header("Download Preprocessed Data")
 
 
-# "Documentation
+# Documentation
 
 def documentation():
     """
-    This function displays the documentation page of the Dataset Preprocessor application.
-    It provides detailed descriptions of each functionality, including uploading a dataset,
+    Displays the documentation page of the Dataset Preprocessor application.
+    Provides detailed descriptions of each functionality, including uploading a dataset,
     data visualization, handling missing values, removing redundant features, feature selection,
     encoding data, feature scaling, automatic processing, downloading preprocessed data,
     resetting the DataFrame, working with another dataset, and logging.
@@ -134,6 +153,17 @@ def documentation():
 
 
 def side_bar():
+    """
+    Creates a sidebar in the Streamlit application with navigation buttons for different sections
+    of the Dataset Preprocessor application. It also initializes a session state variable for
+    confirming reset if not already present.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     if "confirm_reset" not in st.session_state:
         st.session_state.confirm_reset = False
     with st.sidebar:
@@ -155,8 +185,4 @@ def side_bar():
         if st.button('Download Preprocessed Data'):
             st.session_state.page = "Download Preprocessed Data"
         if st.button('Documentation'):
-<<<<<<< HEAD
             st.session_state.page = "Documentation"
-=======
-            st.session_state.page = "Documentation"
->>>>>>> Fixing df intialization
