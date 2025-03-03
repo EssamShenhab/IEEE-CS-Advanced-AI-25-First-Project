@@ -155,4 +155,8 @@ def side_bar():
         if st.button('Download Preprocessed Data'):
             st.session_state.page = "Download Preprocessed Data"
         if st.button('Documentation'):
+<<<<<<< HEAD
             st.session_state.page = "Documentation"
+=======
+            st.session_state.page = "Documentation"
+>>>>>>> Fixing df intialization
