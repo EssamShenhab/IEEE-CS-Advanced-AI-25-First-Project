@@ -117,6 +117,79 @@ This function converts the selected categorical data into numerical variables so
     2. One-Hot Encoding
 5. After encoding, the dataset is updated and displayed.
 
+
+Here's a structured summary of your code:
+
+## 7. Feature Scaling (`feature_scaling()`)
+
+This function allows users to apply feature scaling techniques to numerical columns.
+
+### Functionality:
+- Users select between **Normalization** (MinMax Scaling) and **Standardization** (Standard Scaler).
+- The selected scaling technique is applied to all numerical columns.
+- The processed dataset is displayed.
+
+### Steps:
+1. The user selects a scaling method.
+2. The selected transformation is applied using `scaler.fit_transform()`.
+3. The transformed dataset is displayed.
+
+## 8. Automatic Processing (`automatic_processing()`)
+
+This function provides automated data preprocessing, including handling missing values, removing duplicates, addressing redundancy, encoding categorical features, and feature scaling.
+
+### Functionality:
+- **Handle Null Values**: 
+  - Drops columns with ≥ 80% missing values.
+  - Drops rows with ≤ 3% missing values.
+  - Fills numerical columns with the mean and categorical columns with the mode.
+- **Remove Duplicates**: Drops duplicate rows.
+- **Remove Redundant Features**:
+  - Identifies columns where a single value appears ≥ 80% of the time.
+  - Drops highly redundant columns.
+- **Encoding**:
+  - **Binary categorical columns**: Label Encoding.
+  - **Multi-category columns**: One-hot Encoding.
+- **Feature Scaling** (Optional, requires encoding):
+  - Applies MinMax normalization to numerical columns.
+
+### Steps:
+1. Users select preprocessing options via checkboxes.
+2. The selected operations are applied sequentially.
+3. The processed dataset is displayed and can be downloaded.
+
+## 9. Download Preprocessed Data (`download_preprocessed_data()`)
+
+This function allows users to download the processed dataset.
+
+### Functionality:
+- Users provide a filename.
+- The dataset is converted to CSV format.
+- A download button is generated.
+
+### Steps:
+1. Users enter a filename.
+2. The dataset is encoded as a CSV file.
+3. A download button allows users to save the file.
+
+## 10. Documentation (`documentation()`)
+
+This function provides an overview of the dataset preprocessing steps.
+
+### Key Sections:
+- **Uploading Data**: Supports CSV and Excel.
+- **Data Visualization**: Displays statistical summaries and charts.
+- **Handling Null Values**: Various methods for filling or removing missing data.
+- **Encoding Data**: Converts categorical data into numerical form.
+- **Feature Scaling**: Normalization and standardization options.
+- **Feature Selection**: Identifies important features and removes redundant ones.
+- **Download Preprocessed Data**: Saves the cleaned dataset.
+- **Resetting Data**: Restores the dataset to its original state.
+
+---
+
+This summary captures the core functionalities of your script in a structured format. Let me know if you want any refinements!
+
 ## Technologies Used
 - **Python** (Pandas, NumPy, Matplotlib, Seaborn, Scikit-learn)
 - **Streamlit** (for interactive UI)
