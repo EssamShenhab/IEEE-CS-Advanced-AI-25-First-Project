@@ -87,31 +87,24 @@ def handle_missing_values():
     st.header("Handle Missing Values")
 
     def show_nulls_information(data, threshold_max=80, threshold_min=30):
-        nulls_count_df = data.isnull().sum().reset_index().rename(columns={0: 'Count'})
-        nulls_count_df = nulls_count_df[nulls_count_df['Count'] > 0].sort_values(by='Count', ascending=False)
-        nulls_count_df['Percentage'] = (nulls_count_df['Count'] / data.shape[0])*100
-        st.write('Nulls Information:', nulls_count_df)
+        try:
+            nulls_count_df = data.isnull().sum().reset_index().rename(columns={'index': 'Feature', 0: 'Count'})
+            nulls_count_df = nulls_count_df[nulls_count_df['Count'] > 0].sort_values(by='Count', ascending=False)
+            nulls_count_df['Percentage'] = (nulls_count_df['Count'] / data.shape[0]) * 100
+            nulls_count_df['Category'] = 'Drop Observations'
+            nulls_count_df.loc[nulls_count_df['Percentage'] >= threshold_max, 'Category'] = 'Drop Feature'
+            nulls_count_df.loc[(nulls_count_df['Percentage'] >= threshold_min) & (nulls_count_df['Percentage'] < threshold_max), 'Category'] = 'Fill Values'
 
-        # Lets Get Features To Delete
-        features_to_drop = nulls_count_df[nulls_count_df['Percentage'] >= threshold_max]['index'].values
-        st.write(f'Features To Drop : {features_to_drop}')
+            st.write('Nulls Information:', nulls_count_df)
+            return nulls_count_df
+        except Exception as e:
+            st.error(f"Error displaying nulls information: {e}")
+            return pd.DataFrame()
 
-        # Lets Get Features To Fill
-        features_to_fill = nulls_count_df[(nulls_count_df['Percentage'] >= threshold_min) & (nulls_count_df['Percentage'] < threshold_max)][
-            'index'].values
-        st.write(f'Features To Fill : {features_to_fill}')
+    st.session_state.nulls_info_df = show_nulls_information(st.session_state.df)
 
-        # Lets Get Observations To Drop
-        observations_to_drop = nulls_count_df[nulls_count_df['Percentage'] < threshold_min]['index'].values
-        st.write(f"Observations To Drop: {observations_to_drop}")
-
-        return features_to_drop, features_to_fill, observations_to_drop
-
-    st.session_state.features_to_drop, st.session_state.features_to_fill, st.session_state.observations_to_drop = show_nulls_information(st.session_state.df)
-
-
-    if 'col_drop' not in st.session_state:
-        st.session_state.col_drop = None
+    if 'selected_feature' not in st.session_state:
+        st.session_state.selected_feature = None
     if 'show_drop_col_section' not in st.session_state:
         st.session_state.show_drop_col_section = False
     if 'show_fill_section' not in st.session_state:
@@ -157,56 +150,71 @@ def handle_missing_values():
     # Drop Columns Section
     if st.session_state.show_drop_col_section:
 
-        feature_to_drop = st.selectbox("Select a redundant feature to drop:", redundant_df['Feature'])
-
         st.write("---")
         st.subheader("Drop Columns")
-        st.session_state.col_drop = st.selectbox(
-            "Select Column to Drop",
-            st.session_state.df.columns,
-            index=0 if st.session_state.col_drop is None else list(st.session_state.df.columns).index(
-                st.session_state.col_drop)
-        )
+        feature_to_drop = st.selectbox(
+            "Select Feature to Drop",
+            st.session_state.nulls_info_df[st.session_state.nulls_info_df['Category'] == 'Drop Feature']['Feature'])
         if st.button('Confirm Drop'):
-            if st.session_state.col_drop:
-                st.session_state.df = st.session_state.df.drop(columns=st.session_state.col_drop, axis=1)
-                st.session_state.show_dropdown = False
-                st.write('Column dropped Successfully.', st.session_state.df)
+            try:
+                if feature_to_drop:
+                    st.session_state.df = st.session_state.df.drop(columns=feature_to_drop, axis=1)
+                    st.session_state.show_dropdown = False
+                    st.write('Column dropped Successfully.', st.session_state.df)
+            except Exception as e:
+                st.error(f"Error dropping column: {e}")
 
     #Drop Null Values Section
     if st.session_state.show_drop_null_values :
         st.write("---")
         st.subheader("Drop NULL Values")
-        st.session_state.df = st.session_state.df.dropna(subset=st.session_state.observations_to_drop)
-        st.write('Null rows dropped Successfully', st.session_state.df)
+        try:
+            observations_to_drop = st.session_state.nulls_info_df[st.session_state.nulls_info_df['Category'] == 'Drop Observations']['Feature']
+            st.session_state.df = st.session_state.df.dropna(subset=observations_to_drop)
+            st.write('Null rows dropped Successfully', st.session_state.df)
+        except Exception as e:
+            st.error(f"Error dropping null values: {e}")
 
     # Fill Null Values Section
     if st.session_state.show_fill_section:
         st.write("---")
         st.subheader("Fill NULL Values")
-        fill_col = st.selectbox('Select a column to FILL', st.session_state.df.columns)
-        fill_method = st.radio('Choose a method to fill NULL values',
-                               ('Zero', 'Mean', 'Median', 'Mode', 'Forwardfill', 'Backfill'))
-        if st.button('Submit'):
-            if fill_method == 'Zero':
-                st.session_state.df[fill_col].fillna(0, inplace=True)
-            elif fill_method == 'Mean':
-                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mean(), inplace=True)
-            elif fill_method == 'Median':
-                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].median(), inplace=True)
-            elif fill_method == 'Mode':
-                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mode()[0], inplace=True)
-            elif fill_method == 'Forwardfill':
-                st.session_state.df[fill_col].fillna(method='ffill', inplace=True)
-            elif fill_method == 'Backfill':
-                st.session_state.df[fill_col].fillna(method='bfill', inplace=True)
-            st.write('Nulls filled successfully.', st.session_state.df)
+        try:
+            columns_to_fill = st.session_state.nulls_info_df[st.session_state.nulls_info_df['Category'] == 'Fill Values']['Feature']
+            fill_col = st.selectbox('Select a column to FILL',columns_to_fill)
+
+            if pd.api.types.is_numeric_dtype(st.session_state.df[fill_col]):
+                fill_method = st.radio('Choose a method to fill NULL values',
+                                       ('Zero', 'Mean', 'Median', 'Mode', 'Forwardfill', 'Backfill'))
+            else:
+                fill_method = st.radio('Choose a method to fill NULL values',
+                                       ('Mode', 'Forwardfill', 'Backfill'))
+
+            if st.button('Submit'):
+                if fill_method == 'Zero':
+                    st.session_state.df[fill_col].fillna(0, inplace=True)
+                elif fill_method == 'Mean':
+                    st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mean(), inplace=True)
+                elif fill_method == 'Median':
+                    st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].median(), inplace=True)
+                elif fill_method == 'Mode':
+                    st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mode()[0], inplace=True)
+                elif fill_method == 'Forwardfill':
+                    st.session_state.df[fill_col].fillna(method='ffill', inplace=True)
+                elif fill_method == 'Backfill':
+                    st.session_state.df[fill_col].fillna(method='bfill', inplace=True)
+                st.write('Nulls filled successfully.', st.session_state.df)
+        except Exception as e:
+            st.error(f"Error filling null values: {e}")
 
     # Show Dataset Section
     if st.session_state.show_dataset:
         st.write("---")
         st.subheader("Drop NULL Values")
-        st.write('Updated Dataset:', st.session_state.df)
+        try:
+            st.write('Updated Dataset:', st.session_state.df)
+        except Exception as e:
+            st.error(f"Error displaying dataset: {e}")
 
 
 def remove_redundant_features():
@@ -215,33 +223,41 @@ def remove_redundant_features():
 
     # Lets Handle Redundant Features
     def get_redundant_features(data, threshold = 0.8):
-        redundant_features = []
+        try:
+            redundant_features = []
 
-        # Iterate through columns and calculate redundancy
-        for col in data.columns:
-            count_value = data[col].value_counts().max()
-            percentage = (count_value / data.shape[0]) * 100
+            # Iterate through columns and calculate redundancy
+            for col in data.columns:
+                count_value = data[col].value_counts().max()
+                percentage = (count_value / data.shape[0]) * 100
 
-            if percentage > threshold * 100:
-                redundant_features.append([col, count_value, percentage])
+                if percentage > threshold * 100:
+                    redundant_features.append([col, count_value, percentage])
 
-        # Create a DataFrame with the results
-        redundant_df = pd.DataFrame(redundant_features, columns=['Feature', 'Redundant Count', 'Percentage'])
+            # Create a DataFrame with the results
+            redundant_df = pd.DataFrame(redundant_features, columns=['Feature', 'Redundant Count', 'Percentage'])
 
-        return redundant_df
+            return redundant_df
+        except Exception as e:
+            st.error(f"Error identifying redundant features: {e}")
+            return pd.DataFrame()
 
-    redundant_df = get_redundant_features(st.session_state.df)
-    st.dataframe(redundant_df)
+    try:
+        redundant_df = get_redundant_features(st.session_state.df)
+        st.dataframe(redundant_df)
 
-    # Selectbox to choose a feature to drop
-    feature_to_drop = st.selectbox("Select a redundant feature to drop:", redundant_df['Feature'])
+        # Selectbox to choose a feature to drop
+        feature_to_drop = st.selectbox("Select a redundant feature to drop:", redundant_df['Feature'])
 
-    # Button to drop the selected feature
-    if st.button("Drop Feature"):
-        st.session_state.df = st.session_state.df.drop(columns=[feature_to_drop])
-        st.write(f"Feature '{feature_to_drop}' has been dropped.")
-        st.write("Updated DataFrame:")
-        st.dataframe(st.session_state.df)
+        # Button to drop the selected feature
+        if st.button("Drop Feature"):
+            st.session_state.df = st.session_state.df.drop(columns=[feature_to_drop])
+            st.write(f"Feature '{feature_to_drop}' has been dropped.")
+            st.write("Updated DataFrame:")
+            st.dataframe(st.session_state.df)
+    except Exception as e:
+        st.error(f"Error processing redundant features: {e}")
+
 
 def feature_selection():
     side_bar()
