@@ -8,10 +8,13 @@ import logging
 
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+
 
 le = LabelEncoder()
 encoder = OneHotEncoder()
 scaler = MinMaxScaler()
+std_scaler = StandardScaler()
 
 
 
@@ -109,6 +112,41 @@ def encode_data():
 def feature_scaling():
     side_bar()
     st.header("Feature Scaling")
+
+    df = st.session_state.df
+    choice = st.radio("Select how to feature scaling:", ("Normalization", "Standarization"))
+
+    process = st.button('Process')
+
+
+
+
+    numeric_cols = df.select_dtypes(include=['number']).columns
+
+    def normalization(df):
+
+        df_normalized = df.copy()
+        df_normalized[numeric_cols] = scaler.fit_transform(df[numeric_cols])
+    
+        return df_normalized
+
+    def Standardization(df):
+        df_stander = df.copy()
+        df_stander[numeric_cols] = std_scaler.fit_transform(df[numeric_cols])
+
+        return df_stander
+
+    if process:
+        if choice =='Normalization':
+            df = normalization(df)
+
+        elif choice =='Standarization':
+            df = Standardization(df)
+
+        st.table(df)
+
+
+
 
 def automatic_processing():
     side_bar()
@@ -312,39 +350,6 @@ def documentation():
     
     if uploaded_file is not None:
         st.button('Continue', on_click=go_to_next)
-
-
-def visualization():
-    pass   
-
-def handle_missing_values():
-    pass
-
-def remove_redundant_features():    
-    pass
-
-def feature_selection():
-    pass
-
-def encode_data():
-    pass
-
-def feature_scaling():
-    pass
-
-def automatic_processing():
-    pass
-
-def download_preprocessed_data():
-    pass  
-
-def documentation():
-    side_bar()
-    st.title('Documentation')
-    st.write('This is the documentation page')
-    st.write('This is the documentation page')
-    
-
 
 
 
