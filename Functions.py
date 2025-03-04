@@ -84,11 +84,164 @@ def visualization():
 
 def handle_missing_values():
     side_bar()
-    st.header("Handle Missing Values")  
+    st.header("Handle Missing Values")
 
-def remove_redundant_features(): 
+    def show_nulls_information(data, threshold_max=80, threshold_min=30):
+        nulls_count_df = data.isnull().sum().reset_index().rename(columns={0: 'Count'})
+        nulls_count_df = nulls_count_df[nulls_count_df['Count'] > 0].sort_values(by='Count', ascending=False)
+        nulls_count_df['Percentage'] = (nulls_count_df['Count'] / data.shape[0])*100
+        st.write('Nulls Information:', nulls_count_df)
+
+        # Lets Get Features To Delete
+        features_to_drop = nulls_count_df[nulls_count_df['Percentage'] >= threshold_max]['index'].values
+        st.write(f'Features To Drop : {features_to_drop}')
+
+        # Lets Get Features To Fill
+        features_to_fill = nulls_count_df[(nulls_count_df['Percentage'] >= threshold_min) & (nulls_count_df['Percentage'] < threshold_max)][
+            'index'].values
+        st.write(f'Features To Fill : {features_to_fill}')
+
+        # Lets Get Observations To Drop
+        observations_to_drop = nulls_count_df[nulls_count_df['Percentage'] < threshold_min]['index'].values
+        st.write(f"Observations To Drop: {observations_to_drop}")
+
+        return features_to_drop, features_to_fill, observations_to_drop
+
+    st.session_state.features_to_drop, st.session_state.features_to_fill, st.session_state.observations_to_drop = show_nulls_information(st.session_state.df)
+
+
+    if 'col_drop' not in st.session_state:
+        st.session_state.col_drop = None
+    if 'show_drop_col_section' not in st.session_state:
+        st.session_state.show_drop_col_section = False
+    if 'show_fill_section' not in st.session_state:
+        st.session_state.show_fill_section = False
+    if 'show_drop_null_values' not in st.session_state:
+        st.session_state.show_drop_null_values = False
+    if 'show_dataset' not in st.session_state:
+        st.session_state.show_dataset = False
+
+    # Interactive Columns for Actions
+    col1, col2, col3, col4 = st.columns(4)
+
+    # Drop Columns Button
+    with col1:
+        if st.button('Drop Columns'):
+            st.session_state.show_drop_col_section = True
+            st.session_state.show_drop_null_values = False
+            st.session_state.show_fill_section = False
+            st.session_state.show_dataset = False
+
+    with col2:
+        if st.button('Drop Null Values'):
+            st.session_state.show_drop_col_section = False
+            st.session_state.show_drop_null_values = True
+            st.session_state.show_fill_section = False
+            st.session_state.show_dataset = False
+
+    with col3:
+        if st.button('Fill Null Values'):
+            st.session_state.show_drop_col_section = False
+            st.session_state.show_drop_null_values = False
+            st.session_state.show_fill_section = True
+            st.session_state.show_dataset = False
+
+    with col4:
+        if st.button('Show Dataset'):
+            st.session_state.show_drop_col_section = False
+            st.session_state.show_drop_null_values = False
+            st.session_state.show_fill_section = False
+            st.session_state.show_dataset = True
+
+
+    # Drop Columns Section
+    if st.session_state.show_drop_col_section:
+
+        feature_to_drop = st.selectbox("Select a redundant feature to drop:", redundant_df['Feature'])
+
+        st.write("---")
+        st.subheader("Drop Columns")
+        st.session_state.col_drop = st.selectbox(
+            "Select Column to Drop",
+            st.session_state.df.columns,
+            index=0 if st.session_state.col_drop is None else list(st.session_state.df.columns).index(
+                st.session_state.col_drop)
+        )
+        if st.button('Confirm Drop'):
+            if st.session_state.col_drop:
+                st.session_state.df = st.session_state.df.drop(columns=st.session_state.col_drop, axis=1)
+                st.session_state.show_dropdown = False
+                st.write('Column dropped Successfully.', st.session_state.df)
+
+    #Drop Null Values Section
+    if st.session_state.show_drop_null_values :
+        st.write("---")
+        st.subheader("Drop NULL Values")
+        st.session_state.df = st.session_state.df.dropna(subset=st.session_state.observations_to_drop)
+        st.write('Null rows dropped Successfully', st.session_state.df)
+
+    # Fill Null Values Section
+    if st.session_state.show_fill_section:
+        st.write("---")
+        st.subheader("Fill NULL Values")
+        fill_col = st.selectbox('Select a column to FILL', st.session_state.df.columns)
+        fill_method = st.radio('Choose a method to fill NULL values',
+                               ('Zero', 'Mean', 'Median', 'Mode', 'Forwardfill', 'Backfill'))
+        if st.button('Submit'):
+            if fill_method == 'Zero':
+                st.session_state.df[fill_col].fillna(0, inplace=True)
+            elif fill_method == 'Mean':
+                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mean(), inplace=True)
+            elif fill_method == 'Median':
+                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].median(), inplace=True)
+            elif fill_method == 'Mode':
+                st.session_state.df[fill_col].fillna(st.session_state.df[fill_col].mode()[0], inplace=True)
+            elif fill_method == 'Forwardfill':
+                st.session_state.df[fill_col].fillna(method='ffill', inplace=True)
+            elif fill_method == 'Backfill':
+                st.session_state.df[fill_col].fillna(method='bfill', inplace=True)
+            st.write('Nulls filled successfully.', st.session_state.df)
+
+    # Show Dataset Section
+    if st.session_state.show_dataset:
+        st.write("---")
+        st.subheader("Drop NULL Values")
+        st.write('Updated Dataset:', st.session_state.df)
+
+
+def remove_redundant_features():
     side_bar()   
     st.header("Remove Redundant Features")
+
+    # Lets Handle Redundant Features
+    def get_redundant_features(data, threshold = 0.8):
+        redundant_features = []
+
+        # Iterate through columns and calculate redundancy
+        for col in data.columns:
+            count_value = data[col].value_counts().max()
+            percentage = (count_value / data.shape[0]) * 100
+
+            if percentage > threshold * 100:
+                redundant_features.append([col, count_value, percentage])
+
+        # Create a DataFrame with the results
+        redundant_df = pd.DataFrame(redundant_features, columns=['Feature', 'Redundant Count', 'Percentage'])
+
+        return redundant_df
+
+    redundant_df = get_redundant_features(st.session_state.df)
+    st.dataframe(redundant_df)
+
+    # Selectbox to choose a feature to drop
+    feature_to_drop = st.selectbox("Select a redundant feature to drop:", redundant_df['Feature'])
+
+    # Button to drop the selected feature
+    if st.button("Drop Feature"):
+        st.session_state.df = st.session_state.df.drop(columns=[feature_to_drop])
+        st.write(f"Feature '{feature_to_drop}' has been dropped.")
+        st.write("Updated DataFrame:")
+        st.dataframe(st.session_state.df)
 
 def feature_selection():
     side_bar()

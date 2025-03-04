@@ -29,7 +29,7 @@ def main():
     elif st.session_state.page == "Handle Missing Values":
         f.handle_missing_values()
     elif st.session_state.page == "Remove Redundant Features":
-        f.handle_missing_values()
+        f.remove_redundant_features()
     elif st.session_state.page == "Feature Selection":
         f.feature_selection()
     elif st.session_state.page == "Encode Data":
