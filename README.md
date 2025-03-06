@@ -2,7 +2,7 @@
 ---
 
 
-## 1. Dataset Upload ('input_data())')
+## 1. Dataset Upload (`input_data())`)
 
 This function allows users to upload a dataset for preprocessing. It supports CSV and Excel files.
 
@@ -19,7 +19,7 @@ This function allows users to upload a dataset for preprocessing. It supports CS
 3. The dataset is stored in session state.
 4. A "Continue" button allows users to proceed to the next step.
 
-## 2. Data Visualization ('visualization()')
+## 2. Data Visualization (`visualization()`)
 
 This function enables users to visualize the dataset by selecting a column for visualization.
 
@@ -37,7 +37,7 @@ This function enables users to visualize the dataset by selecting a column for v
 3. If the column is numerical, a histogram with a KDE plot is generated.
 4. The visualization is displayed using Matplotlib and Seaborn.
 
-## 3. Handle Missing Values ('handle_missing_values(df)')
+## 3. Handle Missing Values (`handle_missing_values(df)`)
 
 This feature allows you to manage missing values in your dataset efficiently by providing options to:
 
@@ -64,7 +64,7 @@ This feature allows you to manage missing values in your dataset efficiently by 
 2. Users can interactively choose the preferred action using buttons and selection tools.
 3. The dataset is updated in real-time and displayed after each operation.
 
-## 4. Remove Redundant Features ('remove_redundant_features(df)')
+## 4. Remove Redundant Features (`remove_redundant_features(df)`)
 
 This feature identifies and removes features with high redundancy, such as columns with:
 
